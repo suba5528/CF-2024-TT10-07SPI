@@ -4,12 +4,12 @@
 /* This testbench just instantiates the module and makes some convenient wires
    that can be driven / tested by the cocotb test.py.
 */
-module tb ();
+module spi_tb;
 
-  // Dump the signals to a VCD file. You can view it with gtkwave or surfer.
+  // Dump the signals to a VCD file for waveform analysis
   initial begin
-    $dumpfile("tb.vcd");
-    $dumpvars(0, tb);
+    $dumpfile("spi_tb.vcd");
+    $dumpvars(0, spi_tb);
     #1;
   end
 
@@ -22,15 +22,15 @@ module tb ();
   wire [7:0] uo_out;
   wire [7:0] uio_out;
   wire [7:0] uio_oe;
+
 `ifdef GL_TEST
   wire VPWR = 1'b1;
   wire VGND = 1'b0;
 `endif
 
-  // Replace tt_um_example with your module name:
-  tt_um_example user_project (
+  // Instantiate the SPI module (Replace `spi` with your actual module name)
+  spi user_project (
 
-      // Include power ports for the Gate Level test:
 `ifdef GL_TEST
       .VPWR(VPWR),
       .VGND(VGND),
@@ -45,5 +45,32 @@ module tb ();
       .clk    (clk),      // clock
       .rst_n  (rst_n)     // not reset
   );
+
+  // Generate clock signal for the simulation
+  initial begin
+    clk = 0;
+    forever #5 clk = ~clk; // Toggle clock every 5 time units
+  end
+
+  // Test sequence
+  initial begin
+      // Initialize inputs
+      rst_n = 0;
+      ena = 0;
+      ui_in = 8'b00000000;
+      uio_in = 8'b00000000;
+      
+      #10 rst_n = 1; // Release reset after 10 time units
+      ena = 1;
+
+      // SPI communication simulation
+      #10 ui_in = 8'b10101010;  // Example data transmission
+      #10 ui_in = 8'b01010101;
+      #10 ui_in = 8'b11001100;
+      #10 ui_in = 8'b00110011;
+
+      // Finish the test after some time
+      #100 $finish;
+  end
 
 endmodule
