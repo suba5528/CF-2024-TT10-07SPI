@@ -30,7 +30,7 @@ module spi_tb;
 
     // Dump signals for waveform analysis
     initial begin
-        $dumpfile("test/tb.vcd");  // Ensure it saves to the correct directory
+        $dumpfile("test/spi_tb.vcd");  // Ensure it saves to the correct directory
         $dumpvars(0, spi_tb);
     end
 
