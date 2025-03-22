@@ -1,76 +1,67 @@
-`default_nettype none
 `timescale 1ns / 1ps
+`default_nettype none
 
-/* This testbench just instantiates the module and makes some convenient wires
-   that can be driven / tested by the cocotb test.py.
-*/
 module spi_tb;
+    // Declare inputs and outputs
+    reg rs;              // Reset signal
+    reg clock_in;        // Input clock
+    reg mosi;            // Master-to-slave data
+    wire miso;           // Slave-to-master data
+    wire sclk;           // SPI clock
+    reg cs;
+    wire led;  
 
-  // Dump the signals to a VCD file for waveform analysis
-  initial begin
-    $dumpfile("test/tb.v");
-    $dumpvars(0, spi_tb);
-    #1;
-  end
+    // Instantiate the SPI module
+    tt_um_suba uut (  // Ensure module name matches your design
+        .rs(rs),
+        .clock_in(clock_in),
+        .mosi(mosi),
+        .miso(miso),
+        .sclk(sclk),
+        .cs(cs),
+        .led(led)
+    );
 
-  // Wire up the inputs and outputs:
-  reg clk;
-  reg rst_n;
-  reg ena;
-  reg [7:0] ui_in;
-  reg [7:0] uio_in;
-  wire [7:0] uo_out;
-  wire [7:0] uio_out;
-  wire [7:0] uio_oe;
+    // Clock Generation
+    initial begin
+       clock_in = 0;
+       forever #5 clock_in = ~clock_in; // Generate clock with 10ns period
+    end
 
-`ifdef GL_TEST
-  wire VPWR = 1'b1;
-  wire VGND = 1'b0;
-`endif
+    // Dump signals for waveform analysis
+    initial begin
+        $dumpfile("test/tb.vcd");  // Ensure it saves to the correct directory
+        $dumpvars(0, spi_tb);
+    end
 
-  // Instantiate the SPI module (Replace `spi` with your actual module name)
-  tt_um_suba user_project (
+    // Test sequence
+    initial begin
+        rs = 1;     // Reset active
+        cs = 1;     // Chip select inactive
+        mosi = 0;   // Default state
 
-`ifdef GL_TEST
-      .VPWR(VPWR),
-      .VGND(VGND),
-`endif
+        #10 rs = 0; // Release reset
 
-      .ui_in  (ui_in),    // Dedicated inputs
-      .uo_out (uo_out),   // Dedicated outputs
-      .uio_in (uio_in),   // IOs: Input path
-      .uio_out(uio_out),  // IOs: Output path
-      .uio_oe (uio_oe),   // IOs: Enable path (active high: 0=input, 1=output)
-      .ena    (ena),      // enable - goes high when design is selected
-      .clk    (clk),      // clock
-      .rst_n  (rst_n)     // not reset
-  );
+        // Begin SPI communication
+        #10 cs = 0; // Enable SPI slave
+        #20 mosi = 1;
+        #10 mosi = 0;
+        #10 mosi = 1;
+        #10 mosi = 0;
+        #10 mosi = 1;
+        #10 mosi = 1;
+        #10 mosi = 0;
+        #10 mosi = 0;
+        #20 cs = 1; // Disable SPI slave
 
-  // Generate clock signal for the simulation
-  initial begin
-    clk = 0;
-    forever #5 clk = ~clk; // Toggle clock every 5 time units
-  end
+        // Finish Simulation
+        #100;
+        $finish;
+    end
 
-  // Test sequence
-  initial begin
-      // Initialize inputs
-      rst_n = 0;
-      ena = 0;
-      ui_in = 8'b00000000;
-      uio_in = 8'b00000000;
-      
-      #10 rst_n = 1; // Release reset after 10 time units
-      ena = 1;
-
-      // SPI communication simulation
-      #10 ui_in = 8'b10101010;  // Example data transmission
-      #10 ui_in = 8'b01010101;
-      #10 ui_in = 8'b11001100;
-      #10 ui_in = 8'b00110011;
-
-      // Finish the test after some time
-      #500 $finish;
-  end
-
+    // Monitor SPI transactions
+    initial begin
+        $monitor("Time=%0t | RS=%b | Clock=%b | MOSI=%b | MISO=%b | SCLK=%b | CS=%b",
+                 $time, rs, clock_in, mosi, miso, sclk, cs);
+    end
 endmodule
