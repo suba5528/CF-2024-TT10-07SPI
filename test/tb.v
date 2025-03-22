@@ -29,7 +29,7 @@ module spi_tb;
 `endif
 
   // Instantiate the SPI module (Replace `spi` with your actual module name)
-  spi user_project (
+  tt_um_suba user_project (
 
 `ifdef GL_TEST
       .VPWR(VPWR),
