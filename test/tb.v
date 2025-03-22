@@ -8,7 +8,7 @@ module spi_tb;
 
   // Dump the signals to a VCD file for waveform analysis
   initial begin
-    $dumpfile("spi_tb.vcd");
+    $dumpfile("test/tb.vcd");
     $dumpvars(0, spi_tb);
     #1;
   end
@@ -70,7 +70,7 @@ module spi_tb;
       #10 ui_in = 8'b00110011;
 
       // Finish the test after some time
-      #100 $finish;
+      #500 $finish;
   end
 
 endmodule
