@@ -9,12 +9,15 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-Explain how your project works
+SPI (Serial Peripheral Interface) project implements a simple SPI Slave module that communicates with an SPI Master. The project involves receiving data from the master via MOSI, storing it, and sending it back via MISO. 
 
 ## How to test
 
-Explain how to use your project
+1️⃣ Compile & Simulate using vivado.
+2️⃣ Check Waveforms in gtkwave.
+3️⃣ Run on Hardware (FPGA, or Arduino SPI).
+4️⃣ Verify Communication using an SPI Master.
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+PMOD, LED .
