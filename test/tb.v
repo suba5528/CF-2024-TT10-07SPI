@@ -1,80 +1,81 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-/* This testbench instantiates the SPI module and makes convenient wires
-   that can be driven/tested by the cocotb test.py or any other simulator.
-*/
-
 module tb ();
 
   // Dump the signals to a VCD file for waveform viewing
- 
+  initial begin
+    $dumpfile("tb.vcd");
+    $dumpvars(0, tb);
+    #1;
+  end
 
   // Declare wires and regs
-  reg clock_in;
-  reg rs;
-  reg mosi;
-  reg cs;
-  wire miso;
-  wire sclk;
-  wire led;
+  reg clk;
+  reg rst_n;
+  reg ena;
+  reg [7:0] ui_in;
+  reg [7:0] uio_in;
+  wire [7:0] uo_out;
+  wire [7:0] uio_out;
+  wire [7:0] uio_oe;
 
-tt_um_suba sp_ins(
-    .rs(ui_in[0]),          // Reset signal
-    .clock_in(ui_in[1]),    // Clock input
-    .mosi(ui_in[2]),        // MOSI line
-    .miso(uo_out[0]),       // MISO output
-    .led(uo_out[1]),        // LED output
-    .sclk(uo_out[2]),       // SPI Clock output
-    .cs(ui_in[3])           // Chip select input
-);
+  // Instantiate the SPI module (tt_um_suba)
+  tt_um_suba sp_ins (
+      .ui_in  (ui_in),    // Dedicated inputs
+      .uo_out (uo_out),   // Dedicated outputs
+      .uio_in (uio_in),   // IOs: Input path
+      .uio_out(uio_out),  // IOs: Output path
+      .uio_oe (uio_oe),   // IOs: Enable path
+      .ena    (ena),      // Enable signal
+      .clk    (clk),      // Clock
+      .rst_n  (rst_n)     // Reset (active low)
+  );
 
-  
-  // Clock generation
+  // Clock generation (50 MHz)
   initial begin
-    clock_in = 0;
-    forever #5 clock_in = ~clock_in; // 100MHz clock
+    clk = 0;
+    forever #10 clk = ~clk; // Toggle clock every 10 time units
   end
 
   // Test sequence to simulate SPI transaction
   initial begin
-    rs = 1;
-    cs = 1;
-    mosi = 0;
-    #20 rs = 0; // De-assert reset
+    // Initialize Inputs
+    rst_n = 1;      // Assert Reset
+    ena = 1;        // Enable the module
+    ui_in = 8'b00000000;  // Initialize input signals
+    uio_in = 8'b00000000;
+    
+    #20 rst_n = 0;  // Reset goes low
+    #20 rst_n = 1;  // Release Reset
 
-    // Start first SPI transaction
-    #20 cs = 0; // Chip select active
-    #20 mosi = 1;
-    #20 mosi = 0;
-    #20 mosi = 1;
-    #20 mosi = 0;
-    #20 mosi = 1;
-    #20 mosi = 1;
-    #20 mosi = 0;
-    #20 mosi = 0;
-    #20 cs = 1; // Chip select inactive
+    // Start first SPI transaction (CS low, sending data via MOSI)
+    #20 ui_in[1] = 0; // CS low (active)
+        ui_in[2] = 1; // MOSI bit 1
+    #20 ui_in[2] = 0; // MOSI bit 2
+    #20 ui_in[2] = 1; // MOSI bit 3
+    #20 ui_in[2] = 0; // MOSI bit 4
+    #20 ui_in[2] = 1; // MOSI bit 5
+    #20 ui_in[2] = 1; // MOSI bit 6
+    #20 ui_in[2] = 0; // MOSI bit 7
+    #20 ui_in[2] = 0; // MOSI bit 8
+    #20 ui_in[1] = 1; // CS high (end of transaction)
 
     // Wait and start second transaction
     #50;
-    cs = 0;
-    #20 mosi = 0;
-    #20 mosi = 0;
-    #20 mosi = 1;
-    #20 mosi = 0;
-    #20 mosi = 0;
-    #20 mosi = 1;
-    #20 mosi = 0;
-    #20 mosi = 1;
-    #20 cs = 1;
+    ui_in[1] = 0; // CS low
+    #20 ui_in[2] = 0;
+    #20 ui_in[2] = 0;
+    #20 ui_in[2] = 1;
+    #20 ui_in[2] = 0;
+    #20 ui_in[2] = 0;
+    #20 ui_in[2] = 1;
+    #20 ui_in[2] = 0;
+    #20 ui_in[2] = 1;
+    #20 ui_in[1] = 1; // CS high
 
     // End simulation after some time
     #100 $finish;
-  end
-     initial begin
-    $dumpfile("tb.vcd");
-    $dumpvars(0, tb);
-    #1;
   end
 
 endmodule
